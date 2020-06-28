@@ -2,7 +2,28 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'loginScreen.dart';
-import 'dashboard.dart';
+import 'dart:async';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+
+//setting up database
+class User{
+  final String name;
+  final String email;
+  final String password;
+  final String conPassword;
+  
+  User({this.name, this.email, this.password, this.conPassword});
+
+  Map<String, dynamic> toMap(){
+    return{
+      'name' : name,
+      'email': email,
+      'password': password,
+      'conpassword': conPassword,
+    };
+  }
+}
 
 class SignUpScreen extends StatefulWidget{
   @override
@@ -13,9 +34,72 @@ class SignUpScreenState extends State<SignUpScreen>{
    Future navigateToSubpage(context) async{
     Navigator.push(context, MaterialPageRoute(builder: (context) => LoginScreen()));
   }
-  Future navigateToDashboard(context) async{
-    Navigator.push(context, MaterialPageRoute(builder: (context) => Dashboard()));
+ 
+  TextEditingController namecontroller = new TextEditingController();
+  TextEditingController emailcontroller = new TextEditingController();
+  TextEditingController passwordcontroller = new TextEditingController();
+  TextEditingController conpasswordcontroller = new TextEditingController();
+
+Future<void>createDB() async{
+  var databasesPath = await getDatabasesPath();
+  String path = join(databasesPath, 'user_database.db');
+
+final Future<Database> database = openDatabase(path, version: 1,
+  onCreate: (db, version) async {
+    return db.execute(
+      "CREATE TABLE user(name TEXT, email TEXT PRIMARY KEY, password TEXT, conpassword TEXT)"
+    );
+  },
+ );
+
+  Future<void> insertUser(User user) async{
+    final Database db = await database;
+    await db.insert(
+      'user',
+    user.toMap(),
+    conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
+    final uSer = User(
+      name: namecontroller.text,
+      email: emailcontroller.text,
+      password: passwordcontroller.text,
+      conPassword: conpasswordcontroller.text,
+    );
+    await insertUser(uSer);
+}
+
+  String validateName(String value){
+    if (value.isEmpty) {
+      return 'Please enter your name';
+    }
+    return null;
+  }
+  String validateEmail(String value){
+    if (value.isEmpty) {
+      return 'Please enter a valid email address';
+    }
+    if (!value.contains('@')) {
+      return 'Email is invalid, must contain @';
+    }
+    if (!value.contains('.')) {
+      return 'Email is invalid, must contain .';
+    }
+    return null;
+  }
+  String validatePassword(String value){
+    if(value .isEmpty){ 
+      return 'Please enter password';
+    }
+    return null;
+  }
+  String validateConPassword(String value){
+    if(value != passwordcontroller.text){ 
+      return 'Passwords dont match';
+    }
+    return null;
+  }
+
   Widget build(BuildContext context){
     return Scaffold(
       body: Stack(
@@ -58,7 +142,7 @@ class SignUpScreenState extends State<SignUpScreen>{
               ),
               SizedBox(height: 30.0),
               Text(
-                'First Name',
+                'Name',
                 textAlign: TextAlign.start,
                 style: TextStyle(
                   color: Colors.white,
@@ -81,20 +165,22 @@ class SignUpScreenState extends State<SignUpScreen>{
                   ],
                 ),
                 height: 60.0,
-                child: TextField(
+                child: TextFormField(
+                  controller: namecontroller,
                   keyboardType: TextInputType.text,
                   style: TextStyle(
                     color: Colors.white,
                     fontFamily: 'OpenSans',
                   ),
                   decoration: InputDecoration(
+                    errorText: validateName(namecontroller.text),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.only(top: 14.0),
                     prefixIcon: Icon(
                       Icons.person_outline,
                       color: Colors.white,
                     ),
-                    hintText: 'First Name',
+                    hintText: 'Name',
                     hintStyle: TextStyle(
                       color: Colors.white54,
                       fontFamily: 'OpenSans'
@@ -103,52 +189,6 @@ class SignUpScreenState extends State<SignUpScreen>{
                 ),
               ),
               SizedBox(height: 30.0),
-              Text(
-                'Last Name',
-                textAlign: TextAlign.start,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'OpenSans',
-                ),
-              ),
-              SizedBox(height: 10.0),
-              Container(
-                alignment: Alignment.centerLeft,
-                decoration: BoxDecoration(
-                  color: Color(0xffA668A6),
-                  borderRadius: BorderRadius.circular(10.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 6.0,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                height: 60.0,
-                child: TextField(
-                  keyboardType: TextInputType.text,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'OpenSans',
-                  ),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.only(top: 14.0),
-                    prefixIcon: Icon(
-                      Icons.person_outline,
-                      color: Colors.white,
-                    ),
-                    hintText: 'Last Name',
-                    hintStyle: TextStyle(
-                      color: Colors.white54,
-                      fontFamily: 'OpenSans'
-                    )
-                  )
-                ),
-              ),
-               SizedBox(height: 30.0),
               Text(
                 'Email',
                 textAlign: TextAlign.start,
@@ -173,13 +213,15 @@ class SignUpScreenState extends State<SignUpScreen>{
                   ],
                 ),
                 height: 60.0,
-                child: TextField(
+                child: TextFormField(
+                  controller: emailcontroller,
                   keyboardType: TextInputType.text,
                   style: TextStyle(
                     color: Colors.white,
                     fontFamily: 'OpenSans',
                   ),
                   decoration: InputDecoration(
+                    errorText: validateEmail(emailcontroller.text),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.only(top: 14.0),
                     prefixIcon: Icon(
@@ -219,13 +261,15 @@ class SignUpScreenState extends State<SignUpScreen>{
                           ],
                         ),
                         height: 60.0,
-                        child: TextField(
+                        child: TextFormField(
+                          controller: passwordcontroller,
                           obscureText: true,
                           style: TextStyle(
                             color: Colors.white,
                             fontFamily: 'OpenSans',
                           ),
                           decoration: InputDecoration(
+                            errorText: validatePassword(passwordcontroller.text),
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.only(top: 14.0),
                             prefixIcon: Icon(
@@ -265,13 +309,15 @@ class SignUpScreenState extends State<SignUpScreen>{
                           ],
                         ),
                         height: 60.0,
-                        child: TextField(
+                        child: TextFormField(
+                          controller: conpasswordcontroller,
                           obscureText: true,
                           style: TextStyle(
                             color: Colors.white,
                             fontFamily: 'OpenSans',
                           ),
                           decoration: InputDecoration(
+                            errorText: validateConPassword(conpasswordcontroller.text),
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.only(top: 14.0),
                             prefixIcon: Icon(
@@ -291,7 +337,24 @@ class SignUpScreenState extends State<SignUpScreen>{
                         width: double.infinity,
                         child: RaisedButton(
                           elevation: 5.0,
-                          onPressed: () {navigateToDashboard(context);},
+                          onPressed:() {
+                            validateName(namecontroller.text); 
+                            validateEmail(emailcontroller.text); 
+                            validatePassword(passwordcontroller.text); 
+                            validateConPassword(conpasswordcontroller.text);
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context){
+                                return  AlertDialog(
+                                  title: Text("Sign Up"),
+                                  content: Text("Sign Up Successful!", style: TextStyle(fontSize:30.0),),
+                                  actions: [FlatButton(onPressed:(){navigateToSubpage(context);} , child: Text("Log In"),)],
+                                  elevation: 24.0,
+                                );
+                              },
+                              barrierDismissible: false,
+                            );
+                          },
                           padding: EdgeInsets.all(15.0),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30.0),
@@ -317,7 +380,7 @@ class SignUpScreenState extends State<SignUpScreen>{
                           text: TextSpan(
                             children: [
                               TextSpan(
-                                text: 'Already have an Account? ',
+                                text: 'Already have an account? ',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 18.0,
