@@ -102,7 +102,7 @@ class DashboardState extends State<Dashboard>{
           myItems(Icons.iso, "Length of a line Segment",0xffffffff, 'linesegment'),
           myItems(Icons.iso, "Equation of a straight line",0xffffffff, 'straightline'),
           myItems(Icons.iso, "Quadratic Formula",0xffffffff, 'qformula'),
-          myItems(Icons.iso, "Pythagoras Teorem",0xffffffff, 'pythagoras'),
+          myItems(Icons.iso, "Pythagoras Theorem",0xffffffff, 'pythagoras'),
           myItems(Icons.iso, "Frequency Distribution",0xffffffff, 'gfrequency'),
           myItems(Icons.iso, "Piecharts",0xffffffff, 'piechart'),
           myItems(Icons.iso, "Central Tendency",0xffffffff, 'centraltend'),
